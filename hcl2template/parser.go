@@ -322,9 +322,17 @@ func (cfg *PackerConfig) Initialize(opts packer.InitializeOptions) hcl.Diagnosti
 	filterVarsFromLogs(cfg.LocalVariables)
 
 	if opts.LoadRegistryBucketSettingsFromEnv {
-		cfg.Bucket = packerregistry.NewBucketWithIteration(packerregistry.IterationOptions{
-			//
+		var err error
+		cfg.Bucket, err = packerregistry.NewBucketWithIteration(packerregistry.IterationOptions{
+			// TODO
 		})
+		if err != nil {
+			diags = append(diags, &hcl.Diagnostic{
+				Summary:  "Unable to create a valid bucket object for HCP Packer Registry",
+				Detail:   fmt.Sprintf("%s", err),
+				Severity: hcl.DiagError,
+			})
+		}
 		cfg.Bucket.Canonicalize()
 	}
 

@@ -44,7 +44,7 @@ func (c *CoreWrapper) RegistryPublisher() (*packerregistry.Bucket, hcl.Diagnosti
 	if !env.InPARMode() && (env.HasClientID() && env.HasClientSecret()) {
 		return nil, hcl.Diagnostics{
 			&hcl.Diagnostic{
-				Summary: "Publishing build artifacts to Packer Artifact Registry not enabled",
+				Summary: "Publishing build artifacts to HCP Packer Registry not enabled",
 				Detail: fmt.Sprintf("Packer has detected HCP client environment variables but one or more of the "+
 					"required registry variables are missing. Please check that for the following environment variables "+
 					"%q %q", env.HCPPackerRegistry, env.HCPPackerBucket),
@@ -56,7 +56,7 @@ func (c *CoreWrapper) RegistryPublisher() (*packerregistry.Bucket, hcl.Diagnosti
 	if !env.InPARMode() {
 		return nil, hcl.Diagnostics{
 			&hcl.Diagnostic{
-				Summary: "Publishing build artifacts to Packer Artifact Registry not enabled",
+				Summary: "Publishing build artifacts to HCP Packer Registry not enabled",
 				Detail: "No Packer Registry configuration detected; skipping all publishing steps " +
 					"See publishing to a Packer registry for Packer configuration details",
 				Severity: hcl.DiagWarning,
@@ -64,16 +64,26 @@ func (c *CoreWrapper) RegistryPublisher() (*packerregistry.Bucket, hcl.Diagnosti
 		}
 	}
 
-	bucket := packerregistry.NewBucketWithIteration(packerregistry.IterationOptions{})
+	bucket, err := packerregistry.NewBucketWithIteration(packerregistry.IterationOptions{})
+	if err != nil {
+		return nil, hcl.Diagnostics{
+			&hcl.Diagnostic{
+				Summary:  "Unable to create a valid bucket object  for HCP Packer Registry",
+				Detail:   fmt.Sprintf("%s", err),
+				Severity: hcl.DiagError,
+			},
+		}
+	}
+
 	log.Println("WILKEN we have a UUID", bucket.Iteration.RunUUID)
 	// JSON templates don't support reading Packer registry data from a config template so we load all config settings from environment variables.
 	bucket.Canonicalize()
 
-	err := bucket.Validate()
+	err = bucket.Validate()
 	if err != nil {
 		return nil, hcl.Diagnostics{
 			&hcl.Diagnostic{
-				Summary:  "Invalid Packer Artifact Registry configuration",
+				Summary:  "Invalid HCP Packer Registry configuration",
 				Detail:   err.Error(),
 				Severity: hcl.DiagError,
 			},

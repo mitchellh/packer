@@ -23,7 +23,7 @@ type Bucket struct {
 	client *Client
 }
 
-func NewBucketWithIteration(opts IterationOptions) *Bucket {
+func NewBucketWithIteration(opts IterationOptions) (*Bucket, error) {
 	b := Bucket{
 		Description: "Base alpine to rule all clouds.",
 		Labels: map[string]string{
@@ -32,10 +32,13 @@ func NewBucketWithIteration(opts IterationOptions) *Bucket {
 		},
 	}
 
-	i := NewIteration(opts)
+	i, err := NewIteration(opts)
+	if err != nil {
+		return nil, err
+	}
 	b.Iteration = i
 
-	return &b
+	return &b, nil
 }
 
 func (b *Bucket) Validate() error {
